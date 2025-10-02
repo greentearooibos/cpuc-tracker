@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPUC Filing Tracker - Solano County</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        // ========================================
+        // STEP 1: REPLACE YOUR_SHEET_ID_HERE WITH YOUR ACTUAL GOOGLE SHEET ID
+        // To find it: Open your Sheet, look at URL between /d/ and /edit
+        // ========================================
+        
+        const GOOGLE_SHEET_ID = 1aOUIYpvfGmZyzFecsuLpZrZCMGu-6TpJqvd3wYORpDA;
+
+        // ========================================
+        // DO NOT EDIT BELOW THIS LINE
+        // ========================================
+
+        const { useState, useEffect } = React;
+        
+        const AlertCircle = (props) => (
+            <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+        );
+        
+        const CheckCircle = (props) => (
+            <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+        );
+        
+        const AlertTriangle = (props) => (
+            <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+        );
+        
+        const ChevronDown = (props) => (
+            <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                <polyline points="6 9 12 15 18 9"/>
+            </svg>
+        );
+        
+        const ChevronUp = (props) => (
+            <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                <polyline points="18 15 12 9 6 15"/>
+            </svg>
+        );
+        
+        const RefreshCw = (props) => (
+            <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+        );
+        
+        const Loader = (props) => (
+            <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                <line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/>
+                <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/>
+                <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/>
+                <line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/>
+                <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/>
+                <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>
+            </svg>
+        );
+        
+        const FileText = (props) => (
+            <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+            </svg>
+        );
+        
+        const Calendar = (props) => (
+            <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+        );
+        
+        const MapPin = (props) => (
+            <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                <circle cx="12" cy="10" r="3"/>
+            </svg>
+        );
+        
+        const User = (props) => (
+            <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+            </svg>
+        );
+
+        const fetchGoogleSheetData = async () => {
+            try {
+                const url = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json`;
+                const response = await fetch(url);
+                const text = await response.text();
+                const json = JSON.parse(text.substr(47).slice(0, -2));
+                const rows = json.table.rows;
+                const filings = [];
+                
+                for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i].c;
+                    if (!row[0] || !row[0].v) continue;
+                    
+                    filings.push({
+                        id: row[0]?.v || '',
+                        title: row[1]?.v || '',
+                        date: row[2]?.f || row[2]?.v || '',
+                        month: row[3]?.v || '',
+                        summary: row[4]?.v || '',
+                        solanocountyImplication: row[5]?.v || '',
+                        relevantServices: row[15]?.v || '',
+                        priority: row[16]?.v || 'low',
+                        keywords: row[17]?.v || '',
+                        location: row[18]?.v || '',
+                        filer: row[19]?.v || '',
+                        regionalImpact: row[20]?.v || '',
+                        actionSteps: row[21]?.v || '',
+                        dateAdded: row[22]?.v || ''
+                    });
+                }
+                
+                return filings;
+            } catch (error) {
+                console.error('Error:', error);
+                throw error;
+            }
+        };
+
+        const priorityColors = {
+            high: "bg-red-100 text-red-800 border-red-300",
+            medium: "bg-yellow-100 text-yellow-800 border-yellow-300",
+            low: "bg-green-100 text-green-800 border-green-300"
+        };
+
+        const priorityIcons = { high: AlertCircle, medium: AlertTriangle, low: CheckCircle };
+
+        const FilingCard = ({ filing, expanded, onToggle }) => {
+            const PriorityIcon = priorityIcons[filing.priority];
+            const actionStepsList = filing.actionSteps ? filing.actionSteps.split(/\d+\)/).filter(s => s.trim()) : [];
+            
+            return (
+                <div className="border rounded-lg p-4 mb-4 bg-white shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2 flex-wrap">
+                                <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${priorityColors[filing.priority]}`}>
+                                    <PriorityIcon className="inline w-3 h-3 mr-1" />
+                                    {filing.priority.toUpperCase()} PRIORITY
+                                </span>
+                                <span className="text-sm text-gray-500">{filing.id}</span>
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">{filing.title}</h3>
+                            <div className="flex items-center gap-4 text-sm text-gray-600 mb-3 flex-wrap">
+                                <span className="flex items-center gap-1"><Calendar className="w-4 h-4" />{filing.date}</span>
+                                <span className="flex items-center gap-1"><MapPin className="w-4 h-4" />{filing.location}</span>
+                            </div>
+                            <p className="text-gray-700 mb-2">{filing.summary}</p>
+                            <div className="bg-blue-50 border-l-4 border-blue-500 p-3 mb-3">
+                                <p className="text-sm font-semibold text-blue-900">Solano County Implication:</p>
+                                <p className="text-sm text-blue-800">{filing.solanocountyImplication}</p>
+                            </div>
+                            {expanded && (
+                                <div className="mt-4 space-y-3">
+                                    <div className="bg-purple-50 border-l-4 border-purple-500 p-3">
+                                        <p className="text-sm font-semibold text-purple-900 mb-1">Regional Impact Assessment:</p>
+                                        <p className="text-sm text-purple-800">{filing.regionalImpact}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold text-gray-900 mb-1 flex items-center gap-1">
+                                            <User className="w-4 h-4" />Filed By:
+                                        </p>
+                                        <p className="text-sm text-gray-700">{filing.filer}</p>
+                                    </div>
+                                    {filing.relevantServices && (
+                                        <div>
+                                            <p className="text-sm font-semibold text-gray-900 mb-1">Relevant County Services:</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {filing.relevantServices.split(',').map((service, idx) => (
+                                                    <span key={idx} className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">{service.trim()}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                    {filing.keywords && (
+                                        <div>
+                                            <p className="text-sm font-semibold text-gray-900 mb-1">Keywords:</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {filing.keywords.split(',').map((keyword, idx) => (
+                                                    <span key={idx} className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">{keyword.trim()}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                    {actionStepsList.length > 0 && (
+                                        <div>
+                                            <p className="text-sm font-semibold text-gray-900 mb-2">Recommended Action Steps:</p>
+                                            <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
+                                                {actionStepsList.map((step, idx) => (<li key={idx}>{step.trim()}</li>))}
+                                            </ul>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                        <button onClick={() => onToggle(filing.id)} className="ml-4 p-2 hover:bg-gray-100 rounded-full transition-colors">
+                            {expanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        const PriorityDashboard = ({ filings }) => {
+            const priorityCounts = filings.reduce((acc, filing) => {
+                acc[filing.priority] = (acc[filing.priority] || 0) + 1;
+                return acc;
+            }, {});
+            
+            return (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-semibold text-red-600">High Priority</p>
+                                <p className="text-3xl font-bold text-red-700">{priorityCounts.high || 0}</p>
+                            </div>
+                            <AlertCircle className="w-12 h-12 text-red-400" />
+                        </div>
+                    </div>
+                    <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-semibold text-yellow-600">Medium Priority</p>
+                                <p className="text-3xl font-bold text-yellow-700">{priorityCounts.medium || 0}</p>
+                            </div>
+                            <AlertTriangle className="w-12 h-12 text-yellow-400" />
+                        </div>
+                    </div>
+                    <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-semibold text-green-600">Low Priority</p>
+                                <p className="text-3xl font-bold text-green-700">{priorityCounts.low || 0}</p>
+                            </div>
+                            <CheckCircle className="w-12 h-12 text-green-400" />
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const CPUCTracker = () => {
+            const [filings, setFilings] = useState([]);
+            const [loading, setLoading] = useState(true);
+            const [error, setError] = useState(null);
+            const [selectedMonth, setSelectedMonth] = useState("All");
+            const [selectedPriority, setSelectedPriority] = useState("All");
+            const [expandedFilings, setExpandedFilings] = useState(new Set());
+            const [lastUpdated, setLastUpdated] = useState(null);
+            
+            useEffect(() => { loadData(); }, []);
+            
+            const loadData = async () => {
+                setLoading(true);
+                setError(null);
+                try {
+                    const data = await fetchGoogleSheetData();
+                    setFilings(data);
+                    setLastUpdated(new Date());
+                } catch (err) {
+                    setError('Failed to load data. Check Sheet ID and publishing settings.');
+                    console.error(err);
+                } finally {
+                    setLoading(false);
+                }
+            };
+            
+            const months = ["All", ...new Set(filings.map(f => f.month).filter(Boolean))];
+            const filteredFilings = filings.filter(filing => {
+                const monthMatch = selectedMonth === "All" || filing.month === selectedMonth;
+                const priorityMatch = selectedPriority === "All" || filing.priority === selectedPriority;
+                return monthMatch && priorityMatch;
+            });
+            
+            const toggleExpanded = (id) => {
+                setExpandedFilings(prev => {
+                    const next = new Set(prev);
+                    if (next.has(id)) { next.delete(id); } else { next.add(id); }
+                    return next;
+                });
+            };
+            
+            return (
+                <div className="min-h-screen bg-gray-50">
+                    <div className="bg-blue-600 text-white p-6 shadow-lg">
+                        <div className="max-w-7xl mx-auto">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h1 className="text-3xl font-bold mb-2">CPUC Filing Tracker</h1>
+                                    <p className="text-blue-100">Solano County Department of Resource Management</p>
+                                </div>
+                                <button onClick={loadData} disabled={loading} className="bg-blue-500 hover:bg-blue-400 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50">
+                                    <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />Refresh
+                                </button>
+                            </div>
+                            {lastUpdated && <p className="text-blue-200 text-sm mt-2">Last updated: {lastUpdated.toLocaleString()}</p>}
+                        </div>
+                    </div>
+                    <div className="max-w-7xl mx-auto p-6">
+                        {loading && !filings.length ? (
+                            <div className="flex flex-col items-center justify-center py-20">
+                                <Loader className="w-12 h-12 text-blue-600 animate-spin mb-4" />
+                                <p className="text-gray-600">Loading filings from Google Sheets...</p>
+                            </div>
+                        ) : error ? (
+                            <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6 text-center">
+                                <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
+                                <h3 className="text-lg font-semibold text-red-900 mb-2">Error Loading Data</h3>
+                                <p className="text-red-700 mb-4">{error}</p>
+                                <div className="bg-red-100 rounded p-4 text-left text-sm text-red-800">
+                                    <p className="font-semibold mb-2">Checklist:</p>
+                                    <ol className="list-decimal list-inside space-y-1">
+                                        <li>Replace YOUR_SHEET_ID_HERE in code with actual Sheet ID</li>
+                                        <li>Publish Sheet: File → Share → Publish to web</li>
+                                        <li>Share: Click Share button → Anyone with link → Viewer</li>
+                                        <li>Add test data to verify sheet has content</li>
+                                    </ol>
+                                </div>
+                                <button onClick={loadData} className="mt-4 bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg">Try Again</button>
+                            </div>
+                        ) : (
+                            <>
+                                <PriorityDashboard filings={filteredFilings} />
+                                <div className="bg-white rounded-lg shadow p-4 mb-6">
+                                    <div className="flex flex-wrap gap-4">
+                                        <div className="flex-1 min-w-48">
+                                            <label className="block text-sm font-semibold text-gray-700 mb-2">Filter by Month</label>
+                                            <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                                {months.map(month => (<option key={month} value={month}>{month}</option>))}
+                                            </select>
+                                        </div>
+                                        <div className="flex-1 min-w-48">
+                                            <label className="block text-sm font-semibold text-gray-700 mb-2">Filter by Priority</label>
+                                            <select value={selectedPriority} onChange={(e) => setSelectedPriority(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                                <option value="All">All Priorities</option>
+                                                <option value="high">High Priority</option>
+                                                <option value="medium">Medium Priority</option>
+                                                <option value="low">Low Priority</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="mb-4 flex items-center justify-between">
+                                    <h2 className="text-xl font-bold text-gray-900">Recent Filings ({filteredFilings.length})</h2>
+                                    <FileText className="w-6 h-6 text-gray-400" />
+                                </div>
+                                {filteredFilings.length === 0 ? (
+                                    <div className="bg-white rounded-lg shadow p-8 text-center">
+                                        <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                                        <p className="text-gray-500 text-lg">No filings match your current filters.</p>
+                                        <p className="text-gray-400 text-sm mt-2">{filings.length === 0 ? "Add your first filing to the Google Sheet!" : "Try adjusting your filters."}</p>
+                                    </div>
+                                ) : (
+                                    filteredFilings.map(filing => (
+                                        <FilingCard key={filing.id} filing={filing} expanded={expandedFilings.has(filing.id)} onToggle={toggleExpanded} />
+                                    ))
+                                )}
+                            </>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<CPUCTracker />);
+    </script>
+</body>
+</html>
